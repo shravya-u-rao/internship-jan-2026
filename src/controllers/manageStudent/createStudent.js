@@ -1,57 +1,41 @@
 import { Router } from "express";
 const router = Router();
 import studentModel from "../../models/studentModel.js";
+import { send, setErrMsg } from "../../helper/responseHelper.js";
+import { RESPONSE } from "../../config/global.js";
 
 export default router.post("/", async (req, res) => {
   try {
     const { name, rollno, email } = req.body || {};
 
     if (!name || name == undefined) {
-      return res.send({
-        code: 201,
-        message: "name is manadatory",
-      });
+      return send(res, setErrMsg("Name", RESPONSE.REQUIRED));
     }
 
     if (!email || email == undefined) {
-      return res.send({
-        code: 201,
-        message: "email is manadatory",
-      });
+      return send(res, setErrMsg("Email", RESPONSE.REQUIRED));
     }
 
     if (!rollno || rollno == undefined) {
-      return res.send({
-        code: 201,
-        message: "rollno is manadatory",
-      });
+      return send(res, setErrMsg("Roll Number", RESPONSE.REQUIRED));
     }
 
     let isEmailValid = String(email).match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/);
 
     if (isEmailValid == null) {
-      return res.send({
-        code: 203,
-        message: "Invalid email format",
-      });
+      return send(res, setErrMsg("Email", RESPONSE.INVALID));
     }
 
     let isRollnoExists = await studentModel.findOne({ rollno: rollno });
 
     if (isRollnoExists) {
-      return res.send({
-        code: 202,
-        message: "Roll Number already exists",
-      });
+      return send(res, setErrMsg("Roll Number", RESPONSE.ALREADY_EXISTS));
     }
 
     let isEmailExists = await studentModel.findOne({ email: email });
 
     if (isEmailExists) {
-      return res.send({
-        code: 202,
-        message: "Email already exists",
-      });
+      return send(res, setErrMsg("Email", RESPONSE.ALREADY_EXISTS));
     }
 
     await studentModel.create({
@@ -61,23 +45,9 @@ export default router.post("/", async (req, res) => {
       //   name:student_name
     });
 
-    return res.send({
-      code: 200,
-      message: "Student created successfully",
-    });
+    return send(res, RESPONSE.SUCCESS);
   } catch (error) {
     console.log("Create Student", error);
-    return res.send({
-      code: 500,
-      message: "Something went wrong!!",
-    });
+    return send(res, RESPONSE.UNKNOWN_ERR);
   }
 });
-
-
-git init
-git add .
-git commit -m "first commit"
-git branch -M main
-git remote add origin https://github.com/shravya-u-rao/internship-jan-2026.git
-git push -u origin main
