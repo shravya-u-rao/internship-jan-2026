@@ -19,6 +19,14 @@ export const RESPONSE = {
     code: 205,
     message: "not found",
   },
+  MULTER_ERR: {
+    code: 206,
+    message: "",
+  },
+  ACCESS_DENIED: {
+    code: 400,
+    message: "Access denied!!",
+  },
   SUCCESS: {
     code: 200,
     message: "Everything worked fine",

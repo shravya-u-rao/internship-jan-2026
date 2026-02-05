@@ -1,13 +1,13 @@
 import { Router } from "express";
 const router = Router();
-import studentModel from "../../models/studentModel.js";
+import teacherModel from "../../models/teacherModel.js";
 import { send, setErrMsg } from "../../helper/responseHelper.js";
 import { RESPONSE } from "../../config/global.js";
-import { authenticate } from "../../middlewares/authencate.js";
+import bcrypt from "bcrypt";
 
-export default router.post("/", authenticate, async (req, res) => {
+export default router.post("/", async (req, res) => {
   try {
-    const { name, rollno, email } = req.body || {};
+    const { name, password, email } = req.body || {};
 
     if (!name || name == undefined) {
       return send(res, setErrMsg("Name", RESPONSE.REQUIRED));
@@ -17,8 +17,8 @@ export default router.post("/", authenticate, async (req, res) => {
       return send(res, setErrMsg("Email", RESPONSE.REQUIRED));
     }
 
-    if (!rollno || rollno == undefined) {
-      return send(res, setErrMsg("Roll Number", RESPONSE.REQUIRED));
+    if (!password || password == undefined) {
+      return send(res, setErrMsg("Password", RESPONSE.REQUIRED));
     }
 
     let isEmailValid = String(email).match(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/);
@@ -27,28 +27,31 @@ export default router.post("/", authenticate, async (req, res) => {
       return send(res, setErrMsg("Email", RESPONSE.INVALID));
     }
 
-    let isRollnoExists = await studentModel.findOne({ rollno: rollno });
-
-    if (isRollnoExists) {
-      return send(res, setErrMsg("Roll Number", RESPONSE.ALREADY_EXISTS));
+    //password validation
+    let isPasswordValid = String(password).match(
+      /^(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[^\w\d\s:])([^\s]){8,16}$/,
+    );
+    if (isPasswordValid == null) {
+      return send(res, setErrMsg("Password", RESPONSE.INVALID));
     }
 
-    let isEmailExists = await studentModel.findOne({ email: email });
+    let isEmailExists = await teacherModel.findOne({ email: email });
 
     if (isEmailExists) {
       return send(res, setErrMsg("Email", RESPONSE.ALREADY_EXISTS));
     }
 
-    await studentModel.create({
+    let encryptedPassword = await bcrypt.hash(password, 10);
+
+    await teacherModel.create({
       name,
-      rollno,
       email,
-      teacher_id: req.user.id, //accessing teacher id from token
+      password: encryptedPassword,
     });
 
     return send(res, RESPONSE.SUCCESS);
   } catch (error) {
-    console.log("Create Student", error);
+    console.log("Register", error);
     return send(res, RESPONSE.UNKNOWN_ERR);
   }
 });
